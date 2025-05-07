@@ -1,40 +1,34 @@
 #!/bin/bash
-
 set -e
 
-echo "🔧 Updating system..."
-sudo apt update
-sudo apt install -y curl git build-essential
-
-echo "📦 Installing NVM..."
-export NVM_DIR="$HOME/.nvm"
+echo "📦 Installing NVM as root..."
+export NVM_DIR="/root/.nvm"
 if [ ! -d "$NVM_DIR" ]; then
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
+  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
 fi
 
-export NVM_DIR="$HOME/.nvm"
+export NVM_DIR="/root/.nvm"
 source "$NVM_DIR/nvm.sh"
+source "$NVM_DIR/bash_completion"
 
-echo "📦 Installing Node.js LTS with NVM..."
+echo "📦 Installing Node.js LTS..."
 nvm install --lts
 nvm use --lts
 
 echo "📦 Installing pm2 globally..."
 npm install -g pm2
 
-echo "📂 Entering your project directory..."
+echo "📂 Entering project..."
 
-echo "📦 Installing project dependencies..."
+echo "📦 Installing deps..."
 npm install
 
-echo "🏗️ Building Next.js app..."
+echo "🏗️ Building..."
 npm run build
 
-echo "🚀 Starting app with pm2..."
+echo "🚀 Starting with pm2..."
 pm2 start npm --name next-app -- run start
-
-echo "💾 Saving pm2 startup config..."
-pm2 startup systemd -u $USER --hp $HOME
+pm2 startup systemd -u root
 pm2 save
 
-echo "✅ Setup complete. Your app should be running at http://<server-ip>:3000"
+echo "✅ Running at http://<your-server-ip>:3000"
