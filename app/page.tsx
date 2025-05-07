@@ -99,7 +99,7 @@ export default function Home() {
           <section>
             <h2 className="text-2xl font-semibold mb-4">PyBebra optimizes your awful Python code</h2>
             <p className="mb-6 text-gray-300">
-              Paste your Python function below and click "Optimize" to improve its performance.
+              Paste your Python function below and click "Optimize" to improve its performance. Be aware, this page is static and your generation history lives in your browser. If you refresh the page, your history will be lost. If you encounter any issues, please try a simpler request, try again later, or contact us on Slack.
             </p>
 
             <Card className="bg-[#2b2d30] border-[#323438] p-4">

@@ -7,7 +7,7 @@ const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
   title: "PyBebra",
-  description: "Optimize your Python functions for better performance",
+  description: "Optimize your Python function for better performance",
 }
 
 export default function RootLayout({
