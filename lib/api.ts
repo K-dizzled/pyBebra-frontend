@@ -13,6 +13,7 @@ export async function optimizeFunction(code: string, onEvent: (event: Optimizati
           "Content-Type": "application/json",
           Accept: "application/json",
         },
+        timeout: 150000,
       }
     );
 
@@ -23,10 +24,24 @@ export async function optimizeFunction(code: string, onEvent: (event: Optimizati
         performance_improvement: "N/A",
       },
     });
-  } catch (error) {
+  } catch (error: any) {
+    let message = "An error occurred during optimization";
+    if (error.code === 'ECONNABORTED') {
+      message = "Optimization timed out after 30 seconds.";
+    } else if (error.response) {
+      if (error.response.data && typeof error.response.data.detail === 'string') {
+        message = `Server error: ${error.response.data.detail}`;
+      } else if (typeof error.response.data === 'string') {
+        message = `Server error: ${error.response.data}`;
+      } else {
+        message = `Server error: ${error.response.statusText || 'Unknown error'}`;
+      }
+    } else if (error.message) {
+      message = error.message;
+    }
     onEvent({
       type: "error",
-      data: { message: "An error occurred during optimization" },
+      data: { message },
     });
   }
 }
