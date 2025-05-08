@@ -43,6 +43,7 @@ export async function optimizeFunction(
         try {
           const evt = JSON.parse(line.slice(5).trim());
           let data = evt.data;
+          console.log("DEBUG event received", evt);
 
           if (evt.event_type === "result") {
             data = {

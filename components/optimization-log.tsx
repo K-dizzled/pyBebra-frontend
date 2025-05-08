@@ -49,7 +49,17 @@ export default function OptimizationLog({ run, collapsed = false }: Optimization
       case "rag_retrieved":
         return `RAG retrieved code samples`
       case "result": 
-        return `Generation successful, optimized x${event.data.performance_improvement.toFixed(2)} times`
+        const improvement = event.data.performance_improvement;
+        const percentage = ((improvement - 1) * 100).toFixed(1);
+        return (
+          <div className="flex items-center gap-2">
+            <span>Generation successful:</span>
+            <span className="inline-flex items-center px-2 py-1 rounded-md bg-green-500/10 text-green-400 font-medium">
+              {percentage}% faster
+            </span>
+            <span className="text-gray-400">({improvement.toFixed(2)}x speedup)</span>
+          </div>
+        )
       case "fuzz_wrapper_generated":
         return "Fuzz wrapper generated"
       case "error":
