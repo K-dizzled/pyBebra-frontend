@@ -13,7 +13,7 @@ export async function optimizeFunction(
   let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
   try {
-    const response = await fetch("http://134.122.84.38:8089/improve/stream?code=" + encodeURIComponent(code), {
+    const response = await fetch("/api/improve/stream?code=" + encodeURIComponent(code), {
       headers: {
         "Accept": "text/event-stream",
         "X-Playground-Token": "bebra",
