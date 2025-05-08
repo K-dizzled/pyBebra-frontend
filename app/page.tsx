@@ -53,13 +53,13 @@ export default function Home() {
 
           if (
             !addedToHistory &&
-            (event.type === "optimization_success" || event.type === "ran_out_of_attempts")
+            (event.type === "optimization_success" || event.type === "generated_function_rejected" || event.type === "error")
           ) {
             addedToHistory = true
             if (event.type === "optimization_success") {
               updatedRun.optimizedCode = event.data.generated_code
               updatedRun.status = "success"
-            } else if (event.type === "ran_out_of_attempts") {
+            } else {
               updatedRun.status = "failed"
             }
             setPastRuns((oldRuns) => [updatedRun, ...oldRuns])
