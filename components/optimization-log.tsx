@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { ChevronDown, ChevronRight, CheckCircle, XCircle, AlertCircle, Database, Code, Loader2 } from "lucide-react"
+import { ChevronDown, ChevronRight, CheckCircle, XCircle, AlertCircle, Database, Code, Loader2, Cigarette, CircleCheck, CircleGauge } from "lucide-react"
 import type { OptimizationRun } from "@/lib/types"
 import CodeBlock from "@/components/code-block"
 
@@ -27,16 +27,16 @@ export default function OptimizationLog({ run, collapsed = false }: Optimization
 
   const getEventIcon = (type: string) => {
     switch (type) {
-      case "generation_started":
+      case "started":
         return <Loader2 className="h-4 w-4 text-blue-400" />
       case "rag_retrieved":
         return <Database className="h-4 w-4 text-purple-400" />
-      case "generation_attempt":
-        return <Code className="h-4 w-4 text-yellow-400" />
-      case "optimization_success":
+      case "result":
         return <CheckCircle className="h-4 w-4 text-green-500" />
-      case "ran_out_of_attempts":
-        return <XCircle className="h-4 w-4 text-red-500" />
+      case "fuzz_wrapper_generated":
+        return <CircleGauge className="h-4 w-4 text-blue-500" />
+      case "error":
+        return <Cigarette className="h-4 w-4 text-red-500" />
       default:
         return <AlertCircle className="h-4 w-4 text-gray-400" />
     }
@@ -44,20 +44,18 @@ export default function OptimizationLog({ run, collapsed = false }: Optimization
 
   const getEventTitle = (event: any) => {
     switch (event.type) {
-      case "generation_started":
+      case "started":
         return "Generation started"
       case "rag_retrieved":
-        return `RAG retrieved ${event.data.code_samples.length} code samples`
-      case "generation_attempt":
-        return event.data.finished
-          ? "Generation successful"
-          : `Generation attempt failed: ${event.data.differs_on_input}`
-      case "optimization_success":
-        return "Optimization completed successfully"
-      case "ran_out_of_attempts":
-        return "Ran out of optimization attempts"
+        return `RAG retrieved code samples`
+      case "result": 
+        return `Generation successful, optimized x${event.data.performance_improvement.toFixed(2)} times`
+      case "fuzz_wrapper_generated":
+        return "Fuzz wrapper generated"
+      case "error":
+        return `An error occured while calling the server: ${event.data.message}`
       default:
-        return "Unknown event"
+        return "Unknown event type"
     }
   }
 
@@ -110,24 +108,31 @@ export default function OptimizationLog({ run, collapsed = false }: Optimization
                               </AccordionTrigger>
                               <AccordionContent>
                                 <div className="space-y-2">
-                                  {event.data.code_samples.map((sample: string, i: number) => (
-                                    <CodeBlock key={i} code={sample} language="python" />
-                                  ))}
+                                  {<CodeBlock key={event.data} code={event.data} language="python" />}
                                 </div>
                               </AccordionContent>
                             </AccordionItem>
                           </Accordion>
                         )}
 
-                        {event.type === "generation_attempt" && !event.data.finished && (
-                          <div className="mt-2 text-xs text-red-400">
-                            Failed on input: {event.data.differs_on_input}
-                          </div>
+                        {event.type === "fuzz_wrapper_generated" && (
+                          <Accordion type="single" collapsible className="mt-2">
+                            <AccordionItem value="code-samples" className="border-[#323438]">
+                              <AccordionTrigger className="py-2 text-xs text-gray-400">
+                                View fuzz wrapper
+                              </AccordionTrigger>
+                              <AccordionContent>
+                                <div className="space-y-2">
+                                    {<CodeBlock key={event.data} code={event.data} language="python" />}
+                                </div>
+                              </AccordionContent>
+                            </AccordionItem>
+                          </Accordion>
                         )}
 
-                        {event.type === "generation_attempt" && (
+                        {event.type === "result" && (
                           <Accordion type="single" collapsible className="mt-2">
-                            <AccordionItem value="generated-code" className="border-[#323438]">
+                            <AccordionItem value="code-samples" className="border-[#323438]">
                               <AccordionTrigger className="py-2 text-xs text-gray-400">
                                 View generated code
                               </AccordionTrigger>

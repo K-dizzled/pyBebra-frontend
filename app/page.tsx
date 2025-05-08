@@ -16,79 +16,93 @@ import "prismjs/themes/prism-tomorrow.css"
 
 export default function Home() {
   const [pythonCode, setPythonCode] = useState<string>(
-    `def fibonacci(n):\n    if n <= 0:\n        return 0\n    elif n == 1:\n        return 1\n    else:\n        return fibonacci(n-1) + fibonacci(n-2)\n\n# This function is inefficient for large values of n\n# due to repeated calculations`,
+    `import numpy as np\n\ndef matmul_loops(a: np.ndarray, b: np.ndarray) -> np.ndarray:\n    m, k = a.shape\n    k2, n = b.shape\n    if k != k2: raise ValueError("shape mismatch")\n    out = np.zeros((m, n), dtype=a.dtype)\n    for i in range(m):\n        for j in range(n):\n            for p in range(k):\n                out[i, j] += a[i, p] * b[p, j]\n    return out`,
   )
   const [isOptimizing, setIsOptimizing] = useState<boolean>(false)
   const [currentRun, setCurrentRun] = useState<OptimizationRun | null>(null)
   const [pastRuns, setPastRuns] = useState<OptimizationRun[]>([])
 
   const handleOptimize = async () => {
-    if (!pythonCode.trim() || isOptimizing) return
+    if (!pythonCode.trim() || isOptimizing) return;
 
-    setIsOptimizing(true)
-    const runId = `run-${Date.now()}`
+    setIsOptimizing(true);
 
-    const newRun: OptimizationRun = {
+    const runId = `run-${Date.now()}`;
+    const startTimestamp = new Date();
+
+    // Local run accumulator
+    let run: OptimizationRun = {
       id: runId,
       originalCode: pythonCode,
       events: [],
       optimizedCode: null,
       status: "running",
-      timestamp: new Date(),
-    }
+      timestamp: startTimestamp,
+    };
 
-    setCurrentRun(newRun)
+    setCurrentRun(run);
 
-    let addedToHistory = false
+    let finished = false;
 
     try {
       await optimizeFunction(pythonCode, (event) => {
-        setCurrentRun((prev) => {
-          if (!prev) return null
+        run = {
+          ...run,
+          events: [...run.events, event],
+        };
 
-          const updatedRun = {
-            ...prev,
-            events: [...prev.events, event],
-          }
+        if (
+          ["result", "error"].includes(event.type)
+        ) {
+          finished = true;
+          console.log(event.data);
+          run = {
+            ...run,
+            status: event.type === "result" ? "success" : "failed",
+            optimizedCode: event.type === "result" ? event.data.generated_code : null,
+          };
 
-          if (
-            !addedToHistory &&
-            (event.type === "optimization_success" || event.type === "generated_function_rejected" || event.type === "error")
-          ) {
-            addedToHistory = true
-            if (event.type === "optimization_success") {
-              updatedRun.optimizedCode = event.data.generated_code
-              updatedRun.status = "success"
-            } else {
-              updatedRun.status = "failed"
-            }
-            setPastRuns((oldRuns) => [updatedRun, ...oldRuns])
-            return null
-          }
+          setPastRuns((prev) => [run, ...prev]);
+          setCurrentRun(null);
+        } else {
+          // For in-progress events, update currentRun for UI
+          setCurrentRun({ ...run });
+        }
+      });
 
-          return updatedRun
-        })
-      })
-    } catch (error) {
-      console.error("Optimization error:", error)
-      setCurrentRun((prev) => {
-        if (!prev) return null
-        return {
-          ...prev,
+      if (!finished) {
+        run = {
+          ...run,
           status: "failed",
           events: [
-            ...prev.events,
+            ...run.events,
             {
               type: "error",
-              data: { message: "An error occurred during optimization" },
+              data: { message: "Unknown error: optimization did not complete." },
             },
           ],
-        }
-      })
+        };
+        setPastRuns((prev) => [run, ...prev]);
+        setCurrentRun(null);
+      }
+    } catch (err) {
+      run = {
+        ...run,
+        status: "failed",
+        events: [
+          ...run.events,
+          {
+            type: "error",
+            data: { message: err instanceof Error ? err.message : String(err) },
+          },
+        ],
+      };
+      setPastRuns((prev) => [run, ...prev]);
+      setCurrentRun(null);
     } finally {
-      setIsOptimizing(false)
+      setIsOptimizing(false);
     }
-  }
+  };  
 
   return (
     <div className="min-h-screen bg-[#1e1f22] text-white flex flex-col">
